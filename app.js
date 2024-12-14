@@ -1,14 +1,13 @@
 const express = require("express")
 const fs = require("fs")
 const app = express();
-
+app.use(express.json())
 
 
 const tours = JSON.parse( fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`))
 
 
 // MiddleWares
-app.use(express.json())
 
 app.use((req, res, next)=>{
     console.log("Hello from MiddleWare")
@@ -105,9 +104,37 @@ const deleteTour = (req, res)=>{
         })
     }
 
-    
+const  getAllUsers = (req, res)=>{
+    res.status(500).json({
+        status: 'fail',
+        message:'route cannot define yet'
+    })
+}
 
-
+const  addUser = (req, res)=>{
+    res.status(500).json({
+        status: 'fail',
+        message:'route cannot define yet'
+    })
+}
+const  getUser = (req, res)=>{
+    res.status(500).json({
+        status: 'fail',
+        message:'route cannot define yet'
+    })
+}
+const  updateUser = (req, res)=>{
+    res.status(500).json({
+        status: 'fail',
+        message:'route cannot define yet'
+    })
+}
+const  deleteUser = (req, res)=>{
+    res.status(500).json({
+        status: 'fail',
+        message:'route cannot define yet'
+    })
+}
 app.get('/',indexPage)
 // app.get('/api/v1/tours', getAllTours)
 // app.post('/api/v1/tours',addTour)
@@ -119,9 +146,12 @@ app.get('/',indexPage)
 app.route('/api/v1/tours').get(getAllTours).post(addTour)
 app.route('/api/v1/tours/:id').get(getTour).patch(updateTour).delete(deleteTour)
 
+app.route('/api/v1/users').get(getAllUsers).post(addUser)
+app.route('/api/v1/tours/:id').get(getUser).patch(updateUser).delete(deleteUser)
 
 
-Srever:
+
+//Srever:
 const port = 3000
 
 app.listen(port, ()=>{
