@@ -40,8 +40,4 @@ app.use('/api/v1/tours', tourRouter)
 app.use('/api/v1/users', userRouter)
 
 //Srever:
-const port = 3000
-
-app.listen(port, ()=>{
-    console.log(`App is listen on Port ${port} ..`)
-})
+module.exports = app;
