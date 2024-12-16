@@ -5,9 +5,19 @@ const tours = JSON.parse( fs.readFileSync(`${__dirname}/../dev-data/data/tours-s
 exports.checkId = (req, res, next, val)=>{
       console.log(`The Tour Id is ${val}`)
     if(req.params.id * 1 > tours.length){
-        res.status(404).json({
+        return res.status(404).json({
             status:"fail",
             message:"Invalid ID"
+        })
+    }
+    next()
+}
+
+exports.checkbody = (req, res, next)=>{
+    if(!req.body.name || !req.body.price){
+        return res.status(400).json({
+            status:"fail",
+            message:"The Name or Price is Missing"
         })
     }
     next()
