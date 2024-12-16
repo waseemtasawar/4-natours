@@ -1,4 +1,4 @@
-
+/*global exports, */
 
 exports.getAllUsers = (req, res)=>{
     res.status(500).json({
