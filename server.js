@@ -31,6 +31,17 @@ const tourSchema = new mongoose.Schema({
 
 const Tour = mongoose.model('Tour', tourSchema)
 
+const testTour = new Tour({
+    name:"THe First tour",
+    rating:4.6,
+    price:567
+})
+ testTour.save().then(doc=>{
+    console.log("Data Added to DataBase", doc)
+ }).catch(error=>{
+    console.log("Filed to Add Data in DataBase")
+ })
+
 const port = process.env.PORT || 3000
 app.listen(port, ()=>{
     console.log(`App is listen on Port ${port} ..`)
