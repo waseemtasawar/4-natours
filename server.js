@@ -2,7 +2,7 @@
 const dotenv = require('dotenv')
 const app = require('./app')
 const mongoose = require('mongoose')
-dotenv.config({path:'./congif.env'})
+dotenv.config({path:'./.env'})
 
 const DB = process.env.DATABASE.replace('<PASSWORD>',process.env.DATABASE_PASSWORD);
 // const DB = process.env.DATABASE;
@@ -39,7 +39,7 @@ const testTour = new Tour({
  testTour.save().then(doc=>{
     console.log("Data Added to DataBase", doc)
  }).catch(error=>{
-    console.log("Filed to Add Data in DataBase")
+    console.log("Filed to Add Data in DataBase" ,error)
  })
 
 const port = process.env.PORT || 3000

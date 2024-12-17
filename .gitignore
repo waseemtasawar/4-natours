@@ -11,7 +11,7 @@ dist/
 build/
 
 # Environment variables
-congif.env
+.env
 
 # OS-specific files
 .DS_Store
