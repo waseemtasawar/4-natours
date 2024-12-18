@@ -12,35 +12,9 @@ mongoose.connect(DB).then(()=>{
     console.log("DB is not Connected", error)
 })
 
-const tourSchema = new mongoose.Schema({
-    name : {
-        type: String,
-        required: [true,"A tour have nust name"],
-        unique:true
-    },
-    rating : {
-        type: Number,
-        default:4.5 
-    },
-    price : {
-        type: Number,
-        required: [true,"A tour have nust price"],
-        
-    }
-})
 
-const Tour = mongoose.model('Tour', tourSchema)
 
-const testTour = new Tour({
-    name:"THe First tour",
-    rating:4.6,
-    price:567
-})
- testTour.save().then(doc=>{
-    console.log("Data Added to DataBase", doc)
- }).catch(error=>{
-    console.log("Filed to Add Data in DataBase" ,error)
- })
+
 
 const port = process.env.PORT || 3000
 app.listen(port, ()=>{
