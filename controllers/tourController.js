@@ -1,60 +1,27 @@
 /*global require, , exports, */
-// const tours = JSON.parse( fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`))
 
 const Tour = require('./../models/tourModel')
+const APIFeatures =  require('../utils/apiFeatures');
+exports.aliasTopTours =(req, res, next)=> {
+req.query.limit ='5';
+req.query.sort = '-ratingsAverage,price'
+req.query.fields ='name,price,ratingsAverage,summary,difficulty'
+next()
+}
 
-// exports.checkId = (req, res, next, val)=>{
-//       console.log(`The Tour Id is ${val}`)
-//     if(req.params.id * 1 > tours.length){
-//         return res.status(404).json({
-//             status:"fail",
-//             message:"Invalid ID"
-//         })
-//     }
-//     next()
-// }
 
-// exports.checkbody = (req, res, next)=>{
-//     if(!req.body.name || !req.body.price){
-//         return res.status(400).json({
-//             status:"fail",
-//             message:"The Name or Price is Missing"
-//         })
-//     }
-//     next()
-// }
+
 
 exports.getAllTours = async (req, res)=>{
 
     try {
-        // Build the query
-        // 1A) Filtring
-        const queryObj = {...req.query}
-        const excludedField =['page','sort','limit','fields'];
-        excludedField.forEach(el=> delete queryObj[el])
-        // 1B) Advance Filtring
-        let queryStr = JSON.stringify(queryObj)
-        queryStr =queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match=>`$${match}`)
-        
-        let query =  Tour.find(JSON.parse(queryStr))
-        // 2)Sorting
-        if(req.query.sort){
-            const sortBy = req.query.sort.split(',').join(' ');
-            query = query.sort(sortBy)
-        }else{
-            query= query.sort('-createdAt')
-        }
-        // 2)filed Limit
-        if(req.query.fields){
-            const fields = req.query.fields.split(',').join(' ');
-            query = query.select(fields)
-        }else{
-            query= query.select('-__v')
-        }
-
-
         // Excuite the Query
-        const tours = await query
+        const features = new APIFeatures(Tour.find(), req.query)
+        .filter()
+        .sort()
+        .limitFields()
+        .paginate();
+        const tours = await features.query
 
         // Send Response
         res.status(200).json({
