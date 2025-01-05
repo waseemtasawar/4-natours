@@ -3,16 +3,16 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 const morgin = require('morgan');
-
 if (process.env.NODE_ENV === 'development') {
   app.use(morgin('dev'));
 }
 
 app.use(express.static(`${__dirname}/public`));
 
+const AppError = require('./utils/appError');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
-
+const globalErrorHandler = require('./controllers/errorController');
 // MiddleWares
 
 app.use((req, res, next) => {
@@ -38,10 +38,14 @@ app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
 app.all('*', (req, res, next) => {
-  res.status(404).json({
-    status: 'fail',
-    message: `Can't find ${req.originalUrl} on this server`,
-  });
+  // const err = new Error(`Can't find ${req.originalUrl} on this server`);
+  // err.status = 'fail';
+  // err.statusCode = 404;
+  // next(err);
+
+  next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 });
+
+app.use(globalErrorHandler);
 //Srever:
 module.exports = app;
