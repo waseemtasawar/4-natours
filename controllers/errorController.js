@@ -1,3 +1,5 @@
+/*global require,  process , module*/
+
 const AppError = require('../utils/appError');
 
 const sendErrorDev = (err, res) => {
@@ -43,6 +45,11 @@ const handleValidationErrorDB = (err) => {
   return new AppError(message, 400);
 };
 
+const handleJWTError = () => new AppError('The Token is invalid', 401);
+
+const handleJWTExpiredError = () =>
+  new AppError('The Token is expired. please login in Again', 401);
+
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
@@ -56,6 +63,8 @@ module.exports = (err, req, res, next) => {
     if (error.code === 11000) error = handleDublicateFieldsDB(error);
     if (error.code === 'ValidationError')
       error = handleValidationErrorDB(error);
+    if (error.name === 'JsonWebTokenError') error = handleJWTError();
+    if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
 
     sendErrorProd(error, res);
   }
