@@ -1,4 +1,5 @@
 /*global require, , exports, process */
+const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
@@ -51,4 +52,28 @@ exports.login = catchAsync(async (req, res, next) => {
     status: 'success',
     token,
   });
+});
+
+exports.protect = catchAsync(async (req, res, next) => {
+  // 1) Getting token and check if there is exist
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    next(
+      new AppError('you are not logged in! please login in to get access', 401),
+    );
+  }
+  // 2) Varification Token
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log(decoded);
+  // 3) check if user still exist
+
+  // 4) check if user changes password after token was issue
+  next();
 });
