@@ -3,7 +3,7 @@ const dotenv = require('dotenv');
 const app = require('./app');
 const mongoose = require('mongoose');
 dotenv.config({ path: './.env' });
-
+// uncatch Exceprion Error handling
 process.on('uncaughtException', (err) => {
   console.log('UNCAUGHT EXCEPTION! Shuting down...');
   console.log(err.name, err.message);
