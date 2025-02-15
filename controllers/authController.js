@@ -79,11 +79,41 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
   // 4) check if user changes password after token was issue
 
-  if (freshUser.changePasswordAfter(decoded.iat)) {
+  if (freshUser.changedPasswordAfter(decoded.iat)) {
     return next(new AppError('user recently change the passowrd', 401));
   }
 
   // Grant access to protected route
   req.user = freshUser;
   next();
+});
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    // roles ['admin', 'lead-guide']. role='user'
+    if (!roles.includes(req.user.role)) {
+      console.log(req.user.role); // log the role from the request body
+
+      return next(
+        new AppError('You do not have permission to perform this action', 403),
+      );
+    }
+
+    next();
+  };
+};
+
+exports.forgorPassword = catchAsync(async (req, res, next) => {
+  // 1) Get User on Posted Email
+
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    next(new AppError('there is no user with this eamil', 404));
+  }
+
+  // 2) Generate the random reset token
+
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
 });
