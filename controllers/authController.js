@@ -5,6 +5,7 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const sendEmail = require('./../utils/email');
+const crypto = require('crypto');
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -117,6 +118,57 @@ exports.forgorPassword = catchAsync(async (req, res, next) => {
 
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
+
+  const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
+
+  const message = `Forgot your password? submit a PATCH request with your new password and passwordConfirm to: ${resetURL}`;
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'yout passowrd rerset token (valid for 10 min',
+      message,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token send to email',
+    });
+  } catch (error) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return next(new AppError('there was an error to send email', 500));
+  }
 });
 
-exports.resetPassword = catchAsync((req, res, next) => {});
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // 1) GEt user based on Token
+
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  // 2) if token has not expired, and there is user, set the new passowrd
+  if (!user) {
+    return next(new AppError('Token in invalid or has expired', 400));
+  }
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  // 3) Update changedPasswordAt property for used
+
+  // 4) log the user in, send jwt
+  const token = signToken(user._id);
+
+  res.status(200).json({
+    status: 'success',
+    token,
+  });
+});
