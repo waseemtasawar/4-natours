@@ -3,6 +3,8 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 const morgin = require('morgan');
+const swaggerDocs = require('./swagger');
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgin('dev'));
 }
@@ -20,6 +22,8 @@ app.use((req, res, next) => {
   // console.log(req.headers);
   next();
 });
+
+swaggerDocs(app);
 
 const indexPage = (req, res) => {
   res.status(200).json({ message: 'Hello from server', app: 'Natours' });
