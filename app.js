@@ -1,20 +1,61 @@
 /*global require, __dirname, module, process*/
 const express = require('express');
 const app = express();
-app.use(express.json());
 const morgin = require('morgan');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 const swaggerDocs = require('./swagger');
-
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgin('dev'));
-}
-
-app.use(express.static(`${__dirname}/public`));
-
 const AppError = require('./utils/appError');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const globalErrorHandler = require('./controllers/errorController');
+const helmet = require('helmet');
+// GLOBAL MIDDLEWARE
+
+// set Security HTTP headers
+app.use(helmet());
+
+// Developmemt logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgin('dev'));
+}
+
+// Limit request form same API
+const limiter = rateLimit({
+  max: 100,
+  windowMs: 60 * 60 * 100,
+  message: 'Too many requests form this IP. please try again in an hour!',
+});
+
+app.use('/api', limiter);
+
+//body parser, reading data from req.body
+app.use(express.json({ limit: '10kb' }));
+
+// Data sanitization against NoSQL query injections
+app.use(mongoSanitize());
+
+// data saritization against XSS
+app.use(xss());
+
+// Prevent Parameter Pollution
+app.use(
+  hpp({
+    whitelist: [
+      'duration',
+      'maxGroupSize',
+      'difficulty',
+      'ratingsAverage',
+      'ratingsQuantity',
+      'price',
+    ],
+  }),
+);
+// Serving static files
+app.use(express.static(`${__dirname}/public`));
+
 // MiddleWares
 
 app.use((req, res, next) => {
