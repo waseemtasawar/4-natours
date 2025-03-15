@@ -18,9 +18,11 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
     .sort()
     .limitFields()
     .paginate();
+
+  console.log('Final query after all features:', features.query); // Debug log to check the final query
+
   const tours = await features.query;
 
-  // SEND RESPONSE
   res.status(200).json({
     status: 'success',
     results: tours.length,

@@ -22,7 +22,7 @@ exports.addReview = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      reviews: newReview,
+      review: newReview,
     },
   });
 });
