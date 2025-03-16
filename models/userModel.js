@@ -1,18 +1,17 @@
-/*global require,  module*/
+/*global require, module */
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const { type } = require('os');
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'A user must have a name'],
+    required: [true, 'Please tell us your name!'],
   },
   email: {
     type: String,
-    required: [true, 'A user must have a email'],
+    required: [true, 'Please provide your email'],
     unique: true,
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email'],
@@ -25,17 +24,19 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'A user must have a password'],
+    required: [true, 'Please provide a password'],
     minlength: 8,
     select: false,
   },
   passwordConfirm: {
     type: String,
-    required: [true, 'A user must have a passwordConfirm'],
+    required: [true, 'Please confirm your password'],
     validate: {
+      // This only works on CREATE and SAVE!!!
       validator: function (el) {
         return el === this.password;
       },
+      message: 'Passwords are not the same!',
     },
   },
   passwordChangedAt: Date,
@@ -49,15 +50,14 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.pre('save', async function (next) {
+  // Only run this function if password was actually modified
   if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  this.passwordConfirm = undefined;
-  next();
-});
 
-userSchema.pre(/^find/, function (next) {
-  // thid point to the current query
-  this.find({ active: { $ne: false } });
+  // Hash the password with cost of 12
+  this.password = await bcrypt.hash(this.password, 12);
+
+  // Delete passwordConfirm field
+  this.passwordConfirm = undefined;
   next();
 });
 
@@ -68,11 +68,17 @@ userSchema.pre('save', function (next) {
   next();
 });
 
+userSchema.pre(/^find/, function (next) {
+  // this points to the current query
+  this.find({ active: { $ne: false } });
+  next();
+});
+
 userSchema.methods.correctPassword = async function (
   candidatePassword,
-  userPassowrd,
+  userPassword,
 ) {
-  return await bcrypt.compare(candidatePassword, userPassowrd);
+  return await bcrypt.compare(candidatePassword, userPassword);
 };
 
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
