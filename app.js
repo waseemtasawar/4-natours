@@ -6,15 +6,22 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const path = require('path');
 const swaggerDocs = require('./swagger');
 const AppError = require('./utils/appError');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 const globalErrorHandler = require('./controllers/errorController');
 const helmet = require('helmet');
 // GLOBAL MIDDLEWARE
 
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+// Serving static files
+app.use(express.static(path.join(__dirname, 'public')));
 // set Security HTTP headers
 app.use(helmet());
 
@@ -54,8 +61,6 @@ app.use(
     ],
   }),
 );
-// Serving static files
-app.use(express.static(`${__dirname}/public`));
 
 // MiddleWares
 
@@ -67,20 +72,15 @@ app.use((req, res, next) => {
 
 swaggerDocs(app);
 
-const indexPage = (req, res) => {
-  res.status(200).json({ message: 'Hello from server', app: 'Natours' });
-};
 // Route Handles
 
-app.get('/', indexPage);
 // app.get('/api/v1/tours', getAllTours)
 // app.post('/api/v1/tours',addTour)
 // app.get('/api/v1/tours/:id',getTour)
 // app.patch('/api/v1/tours/:id', updateTour)
 // app.delete('/api/v1/tours/:id', deleteTour)
 
-// routs
-
+app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
