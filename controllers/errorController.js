@@ -57,15 +57,18 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
-    let error = { ...err };
+    // Handle specific error types
+    let error = Object.create(err); // Better way to preserve prototype
 
-    if (error.name === 'CastError') error = handleCastErrorDB(error);
-    if (error.code === 11000) error = handleDublicateFieldsDB(error);
-    if (error.code === 'ValidationError')
-      error = handleValidationErrorDB(error);
-    if (error.name === 'JsonWebTokenError') error = handleJWTError();
-    if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+    // Check the original error name first
+    if (err.name === 'CastError') error = handleCastErrorDB(err);
+    if (err.code === 11000) error = handleDublicateFieldsDB(err);
+    if (err.name === 'ValidationError') error = handleValidationErrorDB(err);
+    if (err.name === 'JsonWebTokenError') error = handleJWTError();
+    if (err.name === 'TokenExpiredError') error = handleJWTExpiredError();
 
+    // Ensure we only send one response
+    if (res.headersSent) return;
     sendErrorProd(error, res);
   }
 };
