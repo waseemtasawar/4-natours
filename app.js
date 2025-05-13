@@ -15,6 +15,7 @@ const reviewRouter = require('./routes/reviewRoutes');
 const viewRouter = require('./routes/viewRoutes');
 const globalErrorHandler = require('./controllers/errorController');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 // GLOBAL MIDDLEWARE
 
 app.set('view engine', 'pug');
@@ -23,8 +24,25 @@ app.set('views', path.join(__dirname, 'views'));
 // Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
 // set Security HTTP headers
-app.use(helmet());
 
+// Allow Mapbox scripts and styles
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'script-src': ["'self'", 'https://api.mapbox.com'],
+      'connect-src': [
+        "'self'",
+        'https://api.mapbox.com',
+        'https://events.mapbox.com',
+      ],
+      'style-src': ["'self'", 'https://api.mapbox.com', "'unsafe-inline'"], // Mapbox requires inline styles
+      'worker-src': ['blob:'], // Required for Mapbox GL JS
+      'img-src': ["'self'", 'data:', 'blob:', 'https://*.mapbox.com'], // Allow Mapbox map tiles
+      'font-src': ["'self'", 'https://fonts.gstatic.com'],
+    },
+  }),
+);
 // Developmemt logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgin('dev'));
@@ -41,6 +59,7 @@ app.use('/api', limiter);
 
 //body parser, reading data from req.body
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 // Data sanitization against NoSQL query injections
 app.use(mongoSanitize());
@@ -66,7 +85,7 @@ app.use(
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
-  // console.log(req.headers);
+  console.log(req.cookies);
   next();
 });
 
