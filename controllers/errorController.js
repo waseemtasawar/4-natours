@@ -2,30 +2,50 @@
 
 const AppError = require('../utils/appError');
 
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack,
-  });
-};
-
-const sendErrorProd = (err, res) => {
-  // Operational, trusted error: send to client
-  if (err.isOperational) {
-    res.status(err.statusCode).json({
+const sendErrorDev = (req, err, res) => {
+  if (req.orignalUrl.startsWith('/api')) {
+    // API error response
+    return res.status(err.statusCode).json({
       status: err.status,
+      error: err,
       message: err.message,
+      stack: err.stack,
     });
   } else {
+    // Rendered error response
+    return res.status(err.statusCode).render('error', {
+      title: 'Something went wrong',
+      msg: err.message,
+    });
+  }
+};
+
+const sendErrorProd = (req, err, res) => {
+  // Operational, trusted error: send to client
+  if (req.orignalUrl.startsWith('/api')) {
+    if (err.isOperational) {
+      return res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+      });
+    }
     // Programming or other unknown error: don't leak details
-    console.error('ERROR 💥:', err);
-    res.status(500).json({
+    return res.status(500).json({
       status: 'error',
       message: 'Something went wrong!',
     });
   }
+  if (err.isOperational) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+    });
+  }
+  // Programming or other unknown error: don't leak details
+  return res.status(500).json({
+    status: 'error',
+    message: 'Something went wrong!',
+  });
 };
 
 const handleCastErrorDB = (err) => {
@@ -55,7 +75,7 @@ module.exports = (err, req, res, next) => {
   err.status = err.status || 'error';
 
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, res);
+    sendErrorDev(req, err, res);
   } else if (process.env.NODE_ENV === 'production') {
     // Handle specific error types
     let error = Object.create(err); // Better way to preserve prototype
@@ -69,6 +89,6 @@ module.exports = (err, req, res, next) => {
 
     // Ensure we only send one response
     if (res.headersSent) return;
-    sendErrorProd(error, res);
+    sendErrorProd(req, error, res);
   }
 };
